@@ -1,0 +1,15 @@
+import csv
+from timeit import default_timer as timer
+from cassandra.cluster import Cluster
+
+start_time = timer()
+cluster =  Cluster()
+session = cluster.connect('xweather')
+
+f = open('c.csv')
+rows = csv.reader(f)
+
+for row in rows:
+    session.execute("insert into raw_temperature(geohash_id,cal_bucket,event_time,temp,bar) values ('{}','{}','{}',{},{})".format(row[0],row[1],row[2],row[3],row[4]))
+
+print ("All Done in ", timer() - start_time)
