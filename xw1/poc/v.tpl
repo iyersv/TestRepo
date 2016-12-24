@@ -5,6 +5,16 @@
 <br>
 <hr>
 <table>
+<b>Other Nearby Stations:</b>
+%for item in all_stations[1:]:
+   <tr>
+   <td> {{item[0]}} : </td>
+   <td> {{item[1]}} : </td>
+   </tr>
+%end
+</table>
+<hr>
+<table>
   %for item in post:
     <tr>
    <td> <b>{{item[0]}} :</b></td>

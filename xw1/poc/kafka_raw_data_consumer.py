@@ -11,7 +11,7 @@ def Consumer():
 	try:
 	    for message in consumer:
 		data.append(message.value)
-		if len(data) >5000:
+		if len(data) >9000:
 			kafka_insert_data.insert_raw_data(data)
 			data=[]
 		else:

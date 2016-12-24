@@ -7,7 +7,7 @@ import pandas as pd
 import datetime
 import sys
 from operator import itemgetter
-
+import json
 
 def validate_inputs(latlong, reqtype='obs', days=0, metrics='all', maxdistance=30):
     # Validate the inputs passed in.  The validation is primarily that the inputs are present
@@ -99,14 +99,20 @@ def get_neighbors(geohashid):
 
 
 # return <array>
-def get_metrics(station_id, cal_bucket=datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%d')):
+def get_metrics(station_id, cal_bucket=datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m')):
     l = []
     mdict = kafka_insert_data.query_raw_data(station_id, cal_bucket)
     for row in mdict:
         l.append(row)
     try:
         df = pd.DataFrame(l)
-        return df
+        df['Rank'] = df.groupby(['metric_name'])['event_time'].rank(ascending=False)
+        df = df[df['Rank'] == 1.0]
+	df.set_index('metric_name',drop=True,inplace=True)
+	df=df.drop(['Rank','station_id'],axis=1)
+	sdict=df.to_json(orient="index",date_format='iso')
+	sdict=json.loads(sdict)
+	return sdict        
     except:
         print('Error building Dataframe as there were no rows')
 
@@ -129,7 +135,7 @@ if __name__ == '__main__':
         all_data = []
         for row in k:
             print row['station_id']
-            j = kafka_insert_data.query_raw_data(row['station_id'], '2016-12-15')
+            j = kafka_insert_data.query_raw_data(row['station_id'],datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m') )
             for data in j:
                 print (data['metric_name'], data['metric_value'])
                 all_data.append(data)

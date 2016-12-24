@@ -18,6 +18,7 @@ session = cluster.connect('xweather')
 def insert_raw_data(data):
     # Inserts data into the table raw_data
     # Assuming that the data is in the format (station_id,cal_bucket,event_time,metric_name,metric_value)
+    start_time = timer()
     ctr = 0
     query = "insert into raw_data(station_id,cal_bucket,event_time,metric_name,metric_value,insert_time) \
               values (?,?,?,?,?,?)"
@@ -26,7 +27,7 @@ def insert_raw_data(data):
     for row in data:
         try:
             row = list(row.split(','))
-            row[1] = row[2][:10]
+            row[1] = row[2][:7]
             row[2] = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
 
             # bound = prepared.bind((row[0], row[1], row[2], row[3], row[4], datetime.utcnow()))

@@ -24,7 +24,7 @@ def push_to_pandas(filename):
 	#Now loop through the Dataframe
 	for row in df1.itertuples():
 	  j = ','.join((row[8],str(row[1]),str(row[5]),row[8][:3],str(row[2]),str(row[3]),str(row[4]),str(row[6]),str(row[7])))
-	  future = producer.send('topic-weather-stations',j)
+	  #future = producer.send('topic-weather-stations',j)
  	  
 	print('Completed insert into weather stations')
 	
@@ -36,9 +36,10 @@ def push_to_pandas(filename):
 	df=pd.melt(df,id_vars=['id','timestamp','dateTime'])
 	df=df.dropna()
 	# Kafka it
-	start_time = timeit.default_timer()
 	ctr =0;
-	producer = KafkaProducer(bootstrap_servers=['vm1:9092'])
+	producer = KafkaProducer(bootstrap_servers=['vm1:9092'],batch_size=20000,linger_ms=50,buffer_memory=952108864)
+	#producer = KafkaProducer(bootstrap_servers=['vm1:9092'])
+	start_time = timeit.default_timer()
 	for row in df.itertuples():
 	   k=list(row)
 	   k=k[1:]
