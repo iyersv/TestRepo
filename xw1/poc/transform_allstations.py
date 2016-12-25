@@ -24,7 +24,7 @@ def push_to_pandas(filename):
 	#Now loop through the Dataframe
 	for row in df1.itertuples():
 	  j = ','.join((row[8],str(row[1]),str(row[5]),row[8][:3],str(row[2]),str(row[3]),str(row[4]),str(row[6]),str(row[7])))
-	  #future = producer.send('topic-weather-stations',j)
+	  future = producer.send('topic-weather-stations',j)
  	  
 	print('Completed insert into weather stations')
 	
