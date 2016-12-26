@@ -31,15 +31,16 @@ def insert_raw_data(data,consumer='Consumer 1'):
             row[1] = row[2][:7]
             row[2] = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
 
-            # bound = prepared.bind((row[0], row[1], row[2], row[3], row[4], datetime.utcnow()))
-            # session.execute_async(bound)
-            parameters.append((row[0], row[1], row[2], row[3], row[4], datetime.utcnow()))
+            bound = prepared.bind((row[0], row[1], row[2], row[3], row[4], datetime.utcnow()))
+            session.execute_async(bound)
+           # parameters.append((row[0], row[1], row[2], row[3], row[4], datetime.utcnow()))
             ctr += 1
         except Exception,e:
             print('Error processing row '+str(e), row)
 
+    #start_time = timer()
     
-    execute_concurrent_with_args(session, prepared, parameters, concurrency=500)
+    #execute_concurrent_with_args(session, prepared, parameters, concurrency=50)
 
     print('Executed dataset by '+str(consumer)+' in ', timer() - start_time, 'rows:', ctr)
 
@@ -56,7 +57,7 @@ def Consumer():
 	try:
 	    for message in consumer:
 		data.append(message.value)
-		if len(data) >9500:
+		if len(data) >5000:
 			insert_raw_data(data,name)
 			data=[]
 		else:

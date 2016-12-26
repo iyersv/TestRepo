@@ -62,7 +62,7 @@ def Consumer():
 	try:
 	    for message in consumer:
 		data.append(message.value)
-		if len(data) >5000:
+		if len(data) >15000:
 			insert_weather_stations(data,name)
 			data=[]
 		else:
