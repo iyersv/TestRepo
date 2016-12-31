@@ -1,15 +1,15 @@
 <html>
 <h3> Metric Values for requested coordinates (Lat/Long)  {{pos}} .</h3>
 <b>Station ID : </b>{{station_id}}
-<b> Distance from coordinates :</b> {{distance}} 
+<b> Distance from coordinates :</b> {{distance}} kms 
 <br>
 <hr>
 <table>
-<b>Other Nearby Stations:</b>
+<b>Other Nearby Stations (Within 30 Kms) :</b>
 %for item in all_stations[1:]:
    <tr>
    <td> {{item[0]}} : </td>
-   <td> {{item[1]}} : </td>
+   <td> {{item[1]}} kms </td>
    </tr>
 %end
 </table>

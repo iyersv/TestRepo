@@ -12,6 +12,22 @@ from cassandra.query import dict_factory
 from cassandra.query import ordered_dict_factory
 from cassandra.concurrent import execute_concurrent_with_args
 
+def collect_data(df):
+	''' This is only a test function to output the results to a csv file '''
+        import csv
+        csvout = []
+	for row in df:
+	    row = list(row.split(','))
+            row[1] = row[2][:7]
+            row[2] = datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S")
+	    row.insert(5,datetime.utcnow())
+	    csvout.append(row)
+        with open("output.csv","a+") as f:
+                writer=csv.writer(f)
+                writer.writerows(csvout)
+
+
+
 
 def insert_raw_data(data,consumer='Consumer 1'):
     # Inserts data into the table raw_data
@@ -52,13 +68,14 @@ def Consumer():
    name=multiprocessing.current_process().name
    while True:
         print (name,'Starting')
-	consumer = KafkaConsumer('topic-weather-data',group_id='consumer-weather-data',bootstrap_servers=['vm1:9092'],consumer_timeout_ms=16000,heartbeat_interval_ms=1000)
+	consumer = KafkaConsumer('topic-weather-data',group_id='consumer-weather-data',bootstrap_servers=['vm1:9092'],consumer_timeout_ms=14000,heartbeat_interval_ms=1000)
 	consumer.zookeeper_connect='vm1:2181'
 	try:
 	    for message in consumer:
 		data.append(message.value)
 		if len(data) >5000:
 			insert_raw_data(data,name)
+		#	collect_data(data)
 			data=[]
 		else:
 			continue
@@ -67,7 +84,7 @@ def Consumer():
               if len(data) >0:
 			try:
                         	insert_raw_data(data,name)
-                        	#kafka_insert_data.insert_raw_data(data)
+			#	collect_data(data)
                         	data=[]
 			except Exception,e :
 				print('Error due to ',e)
@@ -86,6 +103,7 @@ def Threadstart(ithreads = 1):
 	  print('Job',i)
 
 def main():
+        global csvout
  	if len(sys.argv) >1:
 	  threads = sys.argv[1]
 	else:

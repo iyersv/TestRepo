@@ -3,6 +3,7 @@ import get_metrics
 import kafka_insert_data
 import sys
 import datetime
+import helper_functions
 
 @route('/')
 def hello():
@@ -10,10 +11,15 @@ def hello():
 
 @route('/get_metrics')
 def recipes_list():
-       lat = request.query.lat
-       long = request.query.long
-       lat_long = (lat,long)
-       #lat_long =(22.2842, 70.7683)
+       conf = helper_functions.get_config()
+       place = request.query.place
+       if (place == ''):
+         lat = request.query.lat
+         lon = request.query.long
+       else:
+          place =place.replace(',',' ')
+          lat,lon= helper_functions.get_lat_long(conf,place)
+       lat_long = (lat,lon)
        j = get_metrics.validate_inputs(lat_long)
        k = get_metrics.get_neighbors(j[0])
        #  Now get the raw data for the station id.  Stop if there is one

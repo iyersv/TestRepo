@@ -2,8 +2,6 @@ import pandas as pd
 import time
 import csv
 import pygeohash
-import mzgeohash
-#import kafka_producer
 
 from cassandra.cluster import Cluster
 from kafka import KafkaProducer
@@ -14,30 +12,20 @@ def push_to_pandas(filename):
 	cluster = Cluster()
         session = cluster.connect('xweather')
 
+	producer = KafkaProducer(bootstrap_servers=['vm1:9092'])
+
 	df = pd.read_csv(filename)
 	df1= df[['id','lat','lon','src','elev','timezone','tzoffset']].drop_duplicates()
 	df1.src.fillna('NA')
 	# Adding Geohash Id
 	df1['geohash_id']=df.apply(lambda row:pygeohash.encode(row['lat'],row['lon']),axis=1)
-	query="insert into weather_stations(geohash_id,station_id,elev,geohash_sub,lat,lon,source,timezone,tzoffset,neighbors) values(?,?,?,?,?,?,?,?,?,?)"
-	prepared = session.prepare(query)
 
- 	# Prepare Insert for the neighbor_map_stations table
-	query2 ="insert into neighbor_map_stations(geohash_sub,station_id,geohash_id,lat_long,neighbors) values (?,?,?,?,?)"
-	prepared2=session.prepare(query2)
 	
 	#Now loop through the Dataframe
-
 	for row in df1.itertuples():
-	  k=tuple(row)
-	  maplist=mzgeohash.neighbors(row[8][:4]).values()
-	  
-	  bound=prepared.bind((row[8],row[1],(row[5]),row[8][:4],(row[2]),(row[3]),repr(row[4]),row[6],repr(row[7]),maplist))
-	  session.execute_async(bound)
-
-	  bound2=prepared2.bind((row[8][:4],row[1],row[8],list((str(row[2]),str(row[3]))),maplist))
-          session.execute_async(bound2)
-
+	  j = ','.join((row[8],str(row[1]),str(row[5]),row[8][:3],str(row[2]),str(row[3]),str(row[4]),str(row[6]),str(row[7])))
+	  future = producer.send('topic-weather-stations',j)
+ 	  
 	print('Completed insert into weather stations')
 	
 	#Now to the facts
@@ -48,15 +36,15 @@ def push_to_pandas(filename):
 	df=pd.melt(df,id_vars=['id','timestamp','dateTime'])
 	df=df.dropna()
 	# Kafka it
-	start_time = timeit.default_timer()
 	ctr =0;
-	producer = KafkaProducer(bootstrap_servers=['vm1:9092'])
+	producer = KafkaProducer(bootstrap_servers=['vm1:9092'],batch_size=20000,linger_ms=50,buffer_memory=952108864)
+	#producer = KafkaProducer(bootstrap_servers=['vm1:9092'])
+	start_time = timeit.default_timer()
 	for row in df.itertuples():
 	   k=list(row)
 	   k=k[1:]
 	   j= ','.join(str(x) for x in k)
-	   future = producer.send('temp',j)
-	   #kafka_producer.send_to_kafka('temp',j)
+	   future = producer.send('topic-weather-data',j)
            ctr+=1
         print('Producer timing is ',timeit.default_timer() - start_time,'Rows:',ctr)
 	producer.flush()
@@ -64,4 +52,5 @@ def push_to_pandas(filename):
 
 #Main function
 push_to_pandas('allstations.csv')
+#push_to_pandas('india.csv')
 
